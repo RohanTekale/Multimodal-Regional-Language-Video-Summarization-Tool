@@ -1,0 +1,47 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Temporary files
+*.log
+*.tmp
+temp_*
+*.bak
+
+# Input and output directories (large video files and generated outputs)
+input/*
+output/*
+
+# Exclude specific subdirectories but allow their structure to be tracked
+!input/.gitkeep
+!output/.gitkeep
+!output/*/transcripts/.gitkeep
+!output/*/audio/.gitkeep
+!output/*/video_with_audio/.gitkeep
+
+# Docker artifacts
+*.dockerignore
+Dockerfile.*
+*.tar
+*.tar.gz
+
+# IDE and editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Miscellaneous
+*.swp
+*.swo
+*.lock

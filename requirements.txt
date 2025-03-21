@@ -1,0 +1,9 @@
+scenedetect==0.6.2
+openai-whisper==20231117
+gtts==2.5.1
+librosa==0.10.1
+numpy==1.26.4
+fastapi==0.111.0
+uvicorn==0.29.0
+opencv-python==4.9.0.80
+deep-translator==1.11.4

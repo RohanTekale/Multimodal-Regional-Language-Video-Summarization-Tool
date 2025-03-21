@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  video-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./input:/app/input
+      - ./output:/app/output
+    ports:
+      - "8000:8000"  # Adjust if using 8001
+    environment:
+      - PYTHONUNBUFFERED=1
+    tty: true
