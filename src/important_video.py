@@ -12,6 +12,7 @@ import whisper
 import numpy as np
 import librosa
 from deep_translator import GoogleTranslator
+import json
 
 # Configure logging
 logging.basicConfig(
@@ -38,13 +39,36 @@ class ImportantVideo:
         self.scene_manager.add_detector(ContentDetector(threshold=30.0))
         self.whisper_model = whisper.load_model("base")
         self.translator = GoogleTranslator(source='en', target='hi')
+        self.analytics = {
+            "input_file": video_path,
+            "input_size": os.path.getsize(video_path) / (1024 * 1024),  # Size in MB
+            "processing_steps": {},
+            "scenes": [],
+            "transcripts": {},
+            "audio_files": {},
+            "video_clips": [],
+            "final_output": None,
+            "logs": []
+        }
+
+    def _save_analytics(self, output_folder: str):
+        analytics_path = os.path.join(output_folder, "analytics.json")
+        os.makedirs(output_folder, exist_ok=True)
+        with open(analytics_path, 'w') as f:
+            json.dump(self.analytics, f, indent=2)
+        logger.info(f"Saved analytics to {analytics_path}")
 
     def downscale(self, factor: int = Config.DEFAULT_DOWNSCALE) -> None:
+        start_time = time.time()
         if factor < 1:
             logger.warning(f"Invalid downscale factor: {factor}")
             raise ValueError("Downscale factor must be >= 1")
         logger.debug(f"Setting downscale factor to {factor}")
         self.video_manager.set_downscale_factor(factor)
+        self.analytics["processing_steps"]["downscale"] = {
+            "factor": factor,
+            "time_taken": time.time() - start_time
+        }
 
     def detect_scenes(self) -> None:
         logger.info("Starting scene detection")
@@ -54,10 +78,20 @@ class ImportantVideo:
             self.scene_manager.detect_scenes(frame_source=self.video_manager)
             self.scenes_list = self.scene_manager.get_scene_list()
             logger.info(f"Scene detection completed: found {len(self.scenes_list)} scenes in {time.time() - start_time:.2f} seconds")
+            self.analytics["processing_steps"]["scene_detection"] = {
+                "num_scenes_detected": len(self.scenes_list),
+                "threshold": 30.0,
+                "time_taken": time.time() - start_time
+            }
+            self.analytics["scenes"] = [
+                {"start": start.get_seconds(), "end": end.get_seconds()}
+                for start, end in self.scenes_list
+            ]
             for i, (start, end) in enumerate(self.scenes_list, 1):
                 logger.debug(f"Scene {i}: {start.get_seconds()}s - {end.get_seconds()}s")
         except Exception as e:
             logger.error(f"Error during scene detection: {str(e)}")
+            self.analytics["logs"].append(f"Error during scene detection: {str(e)}")
             raise
         finally:
             self.video_manager.release()
@@ -79,13 +113,16 @@ class ImportantVideo:
             return rms
         except Exception as e:
             logger.error(f"Error calculating audio energy: {str(e)}")
+            self.analytics["logs"].append(f"Error calculating audio energy: {str(e)}")
             return 0.0
         finally:
             safe_remove(temp_audio)
 
     def top_scenes(self) -> None:
+        start_time = time.time()
         if not self.scenes_list:
             logger.error("No scenes detected before calling top_scenes()")
+            self.analytics["logs"].append("No scenes detected before calling top_scenes()")
             raise ValueError("No scenes detected. Run detect_scenes() first.")
         
         logger.info(f"Selecting top {self.num_scenes} scenes with balanced duration and energy")
@@ -100,9 +137,18 @@ class ImportantVideo:
         
         sorted_scenes = sorted(scene_scores, key=lambda x: x[2], reverse=True)
         self.summary_clips = [(s, e) for s, e, _ in sorted_scenes][:self.num_scenes]
+        self.analytics["processing_steps"]["top_scenes"] = {
+            "num_scenes_selected": len(self.summary_clips),
+            "time_taken": time.time() - start_time
+        }
+        self.analytics["summary_clips"] = [
+            {"start": s.get_seconds(), "end": e.get_seconds()}
+            for s, e in self.summary_clips
+        ]
         logger.debug(f"Selected {len(self.summary_clips)} scenes: {[f'{s.get_seconds()}-{e.get_seconds()}s' for s, e in self.summary_clips]}")
 
     def _process_scene(self, i: int, scene: tuple, text_dir: str) -> tuple:
+        start_time = time.time()
         scene_start_time = scene[0].get_seconds() - 0.5
         scene_end_time = scene[1].get_seconds() + 0.5
         temp_audio = f"temp_audio_{i}_{int(time.time())}.wav"
@@ -134,20 +180,33 @@ class ImportantVideo:
             with open(transcript_path, 'w', encoding='utf-8') as f:
                 f.write(text)
             logger.info(f"Transcribed scene {i}: {text[:50]}...")
+            self.analytics["transcripts"][f"scene_{i}"] = {
+                "text": text,
+                "file": transcript_path,
+                "time_taken": time.time() - start_time
+            }
             return (f"scene_{i}", text)
         except Exception as e:
             logger.error(f"Error processing scene {i}: {str(e)}")
+            self.analytics["logs"].append(f"Error processing scene {i}: {str(e)}")
             text = f"Scene {i} summary in Hindi"
             transcript_path = os.path.join(text_dir, f"scene_{i}_transcript.txt")
             with open(transcript_path, 'w', encoding='utf-8') as f:
                 f.write(text)
+            self.analytics["transcripts"][f"scene_{i}"] = {
+                "text": text,
+                "file": transcript_path,
+                "time_taken": time.time() - start_time
+            }
             return (f"scene_{i}", text)
         finally:
             safe_remove(temp_audio)
 
     def convert_clips_to_text(self, output_folder: str) -> dict:
+        start_time = time.time()
         if not self.summary_clips:
             logger.error("No summary clips available for text conversion")
+            self.analytics["logs"].append("No summary clips available for text conversion")
             raise ValueError("No summary clips available. Run top_scenes() first.")
         
         text_dir = os.path.join(output_folder, Config.OUTPUT_TRANSCRIPTS)
@@ -159,10 +218,16 @@ class ImportantVideo:
             scene_key, text = self._process_scene(i, scene, text_dir)
             transcripts[scene_key] = text
         
+        self.analytics["processing_steps"]["convert_clips_to_text"] = {
+            "num_transcripts": len(transcripts),
+            "time_taken": time.time() - start_time
+        }
         logger.info(f"Transcription completed. Transcripts saved in {text_dir}")
+        self._save_analytics(output_folder)
         return transcripts
 
     def text_to_speech(self, transcripts: dict, output_folder: str) -> dict:
+        start_time = time.time()
         audio_dir = os.path.join(output_folder, Config.OUTPUT_AUDIO)
         os.makedirs(audio_dir, exist_ok=True)
         
@@ -173,27 +238,47 @@ class ImportantVideo:
                 if not text.strip():
                     text = f"Scene {scene.split('_')[1]} summary in Hindi"
                 logger.debug(f"Generating TTS for {scene}: {text}")
+                tts_start = time.time()
                 tts = gTTS(text=text, lang=self.lang, slow=self.tts_speed < 1.0)
                 audio_path = os.path.join(audio_dir, f"{scene}_{self.lang}.mp3")
                 tts.save(audio_path)
                 if not os.path.exists(audio_path) or os.path.getsize(audio_path) == 0:
                     logger.error(f"Failed to generate audio for {scene}: File missing or empty")
+                    self.analytics["logs"].append(f"Failed to generate audio for {scene}: File missing or empty")
                     continue
                 audio_paths[scene] = audio_path
+                self.analytics["audio_files"][scene] = {
+                    "file": audio_path,
+                    "size_mb": os.path.getsize(audio_path) / (1024 * 1024),
+                    "time_taken": time.time() - tts_start
+                }
                 logger.info(f"Generated {self.lang} speech for {scene}")
             except Exception as e:
                 logger.error(f"Error generating speech for {scene}: {str(e)}")
+                self.analytics["logs"].append(f"Error generating speech for {scene}: {str(e)}")
                 text = f"Scene {scene.split('_')[1]} summary in Hindi"
+                tts_start = time.time()
                 tts = gTTS(text=text, lang=self.lang, slow=self.tts_speed < 1.0)
                 audio_path = os.path.join(audio_dir, f"{scene}_{self.lang}.mp3")
                 tts.save(audio_path)
                 if os.path.exists(audio_path) and os.path.getsize(audio_path) > 0:
                     audio_paths[scene] = audio_path
+                    self.analytics["audio_files"][scene] = {
+                        "file": audio_path,
+                        "size_mb": os.path.getsize(audio_path) / (1024 * 1024),
+                        "time_taken": time.time() - tts_start
+                    }
                     logger.info(f"Generated fallback {self.lang} speech for {scene}")
         
+        self.analytics["processing_steps"]["text_to_speech"] = {
+            "num_audio_files": len(audio_paths),
+            "time_taken": time.time() - start_time
+        }
+        self._save_analytics(output_folder)
         return audio_paths
 
     def _merge_clip(self, i: int, scene: tuple, audio_path: str, video_dir: str, video_name: str) -> str:
+        start_time = time.time()
         scene_start_time = scene[0].get_seconds() - 0.5
         scene_end_time = scene[1].get_seconds() + 0.5
         output_clip = os.path.join(video_dir, f"{video_name}-scene-{i}.mp4")
@@ -226,16 +311,30 @@ class ImportantVideo:
                 logger.warning(f"No audio for scene {i}, saving video only")
                 shutil.move(temp_video, output_clip)
             
+            self.analytics["video_clips"].append({
+                "file": output_clip,
+                "size_mb": os.path.getsize(output_clip) / (1024 * 1024),
+                "scene_number": i,
+                "time_taken": time.time() - start_time
+            })
             return output_clip
         except Exception as e:
             logger.error(f"Error merging clip {i}: {str(e)}")
+            self.analytics["logs"].append(f"Error merging clip {i}: {str(e)}")
             if os.path.exists(temp_video):
                 shutil.move(temp_video, output_clip)
+            self.analytics["video_clips"].append({
+                "file": output_clip,
+                "size_mb": os.path.getsize(output_clip) / (1024 * 1024),
+                "scene_number": i,
+                "time_taken": time.time() - start_time
+            })
             return output_clip
         finally:
             safe_remove(temp_video)
 
     def merge_audio_with_clips(self, audio_paths: dict, output_folder: str) -> list:
+        start_time = time.time()
         video_dir = os.path.join(output_folder, Config.OUTPUT_VIDEO_CLIPS)
         os.makedirs(video_dir, exist_ok=True)
         
@@ -252,13 +351,20 @@ class ImportantVideo:
             ]
             merged_clips = [future.result() for future in concurrent.futures.as_completed(futures)]
         
+        self.analytics["processing_steps"]["merge_audio_with_clips"] = {
+            "num_clips": len(merged_clips),
+            "time_taken": time.time() - start_time
+        }
         logger.info(f"Merged {len(merged_clips)} clips")
+        self._save_analytics(output_folder)
         return merged_clips
 
     def merge_all_clips(self, merged_clips: list, output_folder: str) -> None:
+        start_time = time.time()
         final_output = os.path.join(output_folder, Config.FINAL_OUTPUT)
         if not merged_clips:
             logger.error("No clips available to merge")
+            self.analytics["logs"].append("No clips available to merge")
             raise ValueError("No clips to merge into final video")
         
         logger.info("Merging all clips into a single video")
@@ -278,10 +384,17 @@ class ImportantVideo:
         try:
             run_ffmpeg(cmd_concat, "Final video merge failed")
             logger.info(f"Final video saved at {final_output}")
+            self.analytics["final_output"] = {
+                "file": final_output,
+                "size_mb": os.path.getsize(final_output) / (1024 * 1024),
+                "time_taken": time.time() - start_time
+            }
         except Exception as e:
             logger.error(f"Error merging clips: {str(e)}")
+            self.analytics["logs"].append(f"Error merging clips: {str(e)}")
         finally:
             safe_remove(concat_list_path)
+            self._save_analytics(output_folder)
 
 def main():
     parser = argparse.ArgumentParser(description="Video summarization and localization tool")

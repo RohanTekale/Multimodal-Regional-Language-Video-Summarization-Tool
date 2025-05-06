@@ -1,0 +1,253 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+    scroll-behavior: smooth;
+}
+
+header {
+    background: #1a3c6d;
+    color: white;
+    padding: 1rem 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.logo {
+    height: 40px;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    font-weight: 500;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 1rem;
+    transition: color 0.3s;
+}
+
+nav a:hover {
+    color: #a8c7fa;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    display: flex;
+    gap: 20px;
+    padding: 0 20px;
+}
+
+.sidebar {
+    width: 250px;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.sidebar h2 {
+    font-size: 1.4rem;
+    color: #1a3c6d;
+    margin-bottom: 15px;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar a {
+    display: block;
+    padding: 10px;
+    color: #333;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
+
+.sidebar a.active, .sidebar a:hover {
+    background: #a8c7fa;
+    color: #1a3c6d;
+}
+
+main {
+    flex: 1;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.input-section, .upload-form {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.input-section h2, .upload-form h2 {
+    font-size: 1.6rem;
+    color: #1a3c6d;
+    margin-bottom: 15px;
+}
+
+.input-group, .upload-form form {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.input-group input, .upload-form input {
+    padding: 10px;
+    font-size: 1rem;
+    width: 200px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    transition: border-color 0.3s;
+}
+
+.input-group input:focus, .upload-form input:focus {
+    border-color: #1a3c6d;
+    outline: none;
+}
+
+.input-group button, .upload-form button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    background: #1a3c6d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.input-group button:hover, .upload-form button:hover {
+    background: #2a5a9d;
+}
+
+.error, #upload-status {
+    color: #d32f2f;
+    text-align: center;
+    margin-top: 10px;
+}
+
+#analytics {
+    display: none;
+}
+
+#analytics.visible {
+    display: block !important;
+}
+
+section {
+    margin-bottom: 40px;
+}
+
+.card {
+    padding: 20px;
+    border-radius: 8px;
+    background: #f9fbfd;
+    margin-bottom: 20px;
+}
+
+.card h3 {
+    font-size: 1.4rem;
+    color: #1a3c6d;
+    margin-bottom: 15px;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+table th, table td {
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    text-align: left;
+}
+
+table th {
+    background: #1a3c6d;
+    color: white;
+    font-weight: 500;
+}
+
+table tr:nth-child(even) {
+    background: #f1f4f8;
+}
+
+table a {
+    color: #1a3c6d;
+    text-decoration: none;
+}
+
+table a:hover {
+    text-decoration: underline;
+}
+
+pre {
+    background: #f1f4f8;
+    padding: 15px;
+    border-radius: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    background: #1a3c6d;
+    color: white;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+    }
+
+    .input-group, .upload-form form {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .input-group input, .upload-form input {
+        width: 100%;
+    }
+
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+}

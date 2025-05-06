@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Summarizer Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="icon" href="/static/assets/favicon.ico" type="image/x-icon">
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-gray-800 text-white p-4">
+            <div class="flex items-center mb-6">
+                <img src="/static/assets/logo.png" alt="Logo" class="w-10 h-10 mr-2">
+                <h1 class="text-xl font-bold">Video Summarizer</h1>
+            </div>
+            <nav>
+                <a href="#user-perspective" class="block py-2 px-4 rounded hover:bg-gray-700 active:bg-gray-700" onclick="showSection('user-perspective')">User Perspective</a>
+                <a href="#developer-perspective" class="block py-2 px-4 rounded hover:bg-gray-700" onclick="showSection('developer-perspective')">Developer Perspective</a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-6 overflow-auto">
+            <header class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Analytics Dashboard</h2>
+                <button onclick="showUploadForm()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Upload Video</button>
+            </header>
+
+            <!-- Upload Form -->
+            <div id="upload-form" class="hidden bg-white p-6 rounded shadow-md mb-6">
+                <h3 class="text-lg font-semibold mb-4">Upload Video</h3>
+                <form id="video-upload-form">
+                    <input type="file" id="video-file" accept="video/*" class="mb-4">
+                    <div id="upload-progress" class="hidden w-full bg-gray-200 rounded h-4">
+                        <div id="progress-bar" class="bg-blue-500 h-full rounded" style="width: 0%"></div>
+                    </div>
+                    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Submit</button>
+                </form>
+                <div id="upload-status" class="mt-4 text-green-600"></div>
+            </div>
+
+            <!-- Input Section -->
+            <div class="input-section mb-6">
+                <input type="text" id="video-id" placeholder="Enter Video ID" class="border p-2 rounded">
+                <button onclick="fetchAnalytics()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Load Analytics</button>
+                <div id="error" class="text-red-500 mt-2"></div>
+            </div>
+
+            <!-- Analytics Section -->
+            <div id="analytics" class="hidden">
+                <!-- User Perspective -->
+                <div id="user-perspective">
+                    <h3 class="text-xl font-semibold mb-4">User Perspective</h3>
+                    <div class="bg-white p-6 rounded shadow-md mb-6">
+                        <h4 class="text-lg font-semibold mb-2">Video Summary</h4>
+                        <p><strong>Input File:</strong> <span id="input-file"></span></p>
+                        <p><strong>Input Size (MB):</strong> <span id="input-size"></span></p>
+                        <p><strong>Final Output:</strong> <span id="final-output-player"></span></p>
+                        <p><strong>Final Size (MB):</strong> <span id="final-size"></span></p>
+                        <p><strong>Total Scenes:</strong> <span id="total-scenes"></span></p>
+                        <p><strong>Selected Scenes:</strong> <span id="selected-scenes"></span></p>
+                    </div>
+                    <div class="bg-white p-6 rounded shadow-md">
+                        <h4 class="text-lg font-semibold mb-2">Scene Details</h4>
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-gray-200">
+                                    <th class="border p-2">Scene</th>
+                                    <th class="border p-2">Start (s)</th>
+                                    <th class="border p-2">End (s)</th>
+                                    <th class="border p-2">Duration (s)</th>
+                                    <th class="border p-2">Transcript</th>
+                                    <th class="border p-2">Audio</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scene-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Developer Perspective -->
+                <div id="developer-perspective" class="hidden">
+                    <h3 class="text-xl font-semibold mb-4">Developer Perspective</h3>
+                    <div class="bg-white p-6 rounded shadow-md mb-6">
+                        <h4 class="text-lg font-semibold mb-2">Processing Times</h4>
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-gray-200">
+                                    <th class="border p-2">Step</th>
+                                    <th class="border p-2">Time Taken (s)</th>
+                                    <th class="border p-2">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="processing-table"></tbody>
+                        </table>
+                    </div>
+                    <div class="bg-white p-6 rounded shadow-md mb-6">
+                        <h4 class="text-lg font-semibold mb-2">File Sizes</h4>
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-gray-200">
+                                    <th class="border p-2">Type</th>
+                                    <th class="border p-2">File</th>
+                                    <th class="border p-2">Size (MB)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="file-sizes-table"></tbody>
+                        </table>
+                    </div>
+                    <div class="bg-white p-6 rounded shadow-md">
+                        <h4 class="text-lg font-semibold mb-2">Logs</h4>
+                        <pre id="logs" class="bg-gray-100 p-4 rounded"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

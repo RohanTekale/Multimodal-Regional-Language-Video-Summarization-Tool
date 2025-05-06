@@ -13,5 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
 COPY input/ ./input/
 COPY output/ ./output/
+COPY static/ ./static/
+COPY video_ids.json ./video_ids.json
 ENV PYTHONUNBUFFERED=1
 CMD ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000"]
