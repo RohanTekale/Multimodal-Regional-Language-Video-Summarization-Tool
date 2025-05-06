@@ -11,50 +11,50 @@
 <body class="bg-gray-100 font-sans">
     <div class="flex h-screen">
         <!-- Sidebar -->
-        <div class="w-64 bg-gray-800 text-white p-4">
+        <div class="w-64 bg-gray-800 text-white p-4" data-sidebar>
             <div class="flex items-center mb-6">
                 <img src="/static/assets/logo.png" alt="Logo" class="w-10 h-10 mr-2">
                 <h1 class="text-xl font-bold">Video Summarizer</h1>
             </div>
             <nav>
-                <a href="#user-perspective" class="block py-2 px-4 rounded hover:bg-gray-700 active:bg-gray-700" onclick="showSection('user-perspective')">User Perspective</a>
-                <a href="#developer-perspective" class="block py-2 px-4 rounded hover:bg-gray-700" onclick="showSection('developer-perspective')">Developer Perspective</a>
+                <a href="#user-perspective" class="block py-2 px-4 rounded hover:bg-gray-700 active:bg-gray-700" onclick="showSection('user-perspective')" data-nav-link>User Perspective</a>
+                <a href="#developer-perspective" class="block py-2 px-4 rounded hover:bg-gray-700" onclick="showSection('developer-perspective')" data-nav-link>Developer Perspective</a>
             </nav>
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 p-6 overflow-auto">
+        <div class="flex-1 p-6 overflow-auto" data-main-content>
             <header class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-gray-800">Analytics Dashboard</h2>
-                <button onclick="showUploadForm()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Upload Video</button>
+                <button onclick="showUploadForm()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" data-upload-button>Upload Video</button>
             </header>
 
             <!-- Upload Form -->
-            <div id="upload-form" class="hidden bg-white p-6 rounded shadow-md mb-6">
+            <div id="upload-form" class="hidden bg-white p-6 rounded shadow-md mb-6" data-upload-form>
                 <h3 class="text-lg font-semibold mb-4">Upload Video</h3>
                 <form id="video-upload-form">
-                    <input type="file" id="video-file" accept="video/*" class="mb-4">
+                    <input type="file" id="video-file" accept="video/*" class="mb-4" aria-label="Upload video file">
                     <div id="upload-progress" class="hidden w-full bg-gray-200 rounded h-4">
                         <div id="progress-bar" class="bg-blue-500 h-full rounded" style="width: 0%"></div>
                     </div>
-                    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Submit</button>
+                    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600" data-submit-button>Submit</button>
                 </form>
-                <div id="upload-status" class="mt-4 text-green-600"></div>
+                <div id="upload-status" class="mt-4 text-green-600" data-upload-status></div>
             </div>
 
             <!-- Input Section -->
-            <div class="input-section mb-6">
-                <input type="text" id="video-id" placeholder="Enter Video ID" class="border p-2 rounded">
-                <button onclick="fetchAnalytics()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Load Analytics</button>
-                <div id="error" class="text-red-500 mt-2"></div>
+            <div class="input-section mb-6" data-input-section>
+                <input type="text" id="video-id" placeholder="Enter Video ID" class="border p-2 rounded" aria-label="Video ID">
+                <button onclick="fetchAnalytics()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" data-load-button>Load Analytics</button>
+                <div id="error" class="text-red-500 mt-2" data-error></div>
             </div>
 
             <!-- Analytics Section -->
-            <div id="analytics" class="hidden">
+            <div id="analytics" class="hidden" data-analytics>
                 <!-- User Perspective -->
-                <div id="user-perspective">
+                <div id="user-perspective" data-user-perspective>
                     <h3 class="text-xl font-semibold mb-4">User Perspective</h3>
-                    <div class="bg-white p-6 rounded shadow-md mb-6">
+                    <div class="bg-white p-6 rounded shadow-md mb-6" data-video-summary>
                         <h4 class="text-lg font-semibold mb-2">Video Summary</h4>
                         <p><strong>Input File:</strong> <span id="input-file"></span></p>
                         <p><strong>Input Size (MB):</strong> <span id="input-size"></span></p>
@@ -63,9 +63,9 @@
                         <p><strong>Total Scenes:</strong> <span id="total-scenes"></span></p>
                         <p><strong>Selected Scenes:</strong> <span id="selected-scenes"></span></p>
                     </div>
-                    <div class="bg-white p-6 rounded shadow-md">
+                    <div class="bg-white p-6 rounded shadow-md" data-scene-details>
                         <h4 class="text-lg font-semibold mb-2">Scene Details</h4>
-                        <table class="w-full border-collapse">
+                        <table class="w-full border-collapse" data-scene-table>
                             <thead>
                                 <tr class="bg-gray-200">
                                     <th class="border p-2">Scene</th>
@@ -82,11 +82,11 @@
                 </div>
 
                 <!-- Developer Perspective -->
-                <div id="developer-perspective" class="hidden">
+                <div id="developer-perspective" class="hidden" data-developer-perspective>
                     <h3 class="text-xl font-semibold mb-4">Developer Perspective</h3>
-                    <div class="bg-white p-6 rounded shadow-md mb-6">
+                    <div class="bg-white p-6 rounded shadow-md mb-6" data-processing-times>
                         <h4 class="text-lg font-semibold mb-2">Processing Times</h4>
-                        <table class="w-full border-collapse">
+                        <table class="w-full border-collapse" data-processing-table>
                             <thead>
                                 <tr class="bg-gray-200">
                                     <th class="border p-2">Step</th>
@@ -97,9 +97,9 @@
                             <tbody id="processing-table"></tbody>
                         </table>
                     </div>
-                    <div class="bg-white p-6 rounded shadow-md mb-6">
+                    <div class="bg-white p-6 rounded shadow-md mb-6" data-file-sizes>
                         <h4 class="text-lg font-semibold mb-2">File Sizes</h4>
-                        <table class="w-full border-collapse">
+                        <table class="w-full border-collapse" data-file-sizes-table>
                             <thead>
                                 <tr class="bg-gray-200">
                                     <th class="border p-2">Type</th>
@@ -110,7 +110,7 @@
                             <tbody id="file-sizes-table"></tbody>
                         </table>
                     </div>
-                    <div class="bg-white p-6 rounded shadow-md">
+                    <div class="bg-white p-6 rounded shadow-md" data-logs>
                         <h4 class="text-lg font-semibold mb-2">Logs</h4>
                         <pre id="logs" class="bg-gray-100 p-4 rounded"></pre>
                     </div>
