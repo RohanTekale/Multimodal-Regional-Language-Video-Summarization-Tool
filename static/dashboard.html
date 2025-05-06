@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
     <link rel="icon" href="/static/assets/favicon.ico" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body class="bg-gray-100 font-sans">
     <div class="flex h-screen">
@@ -19,6 +20,7 @@
             <nav>
                 <a href="#user-perspective" class="block py-2 px-4 rounded hover:bg-gray-700 active:bg-gray-700" onclick="showSection('user-perspective')" data-nav-link>User Perspective</a>
                 <a href="#developer-perspective" class="block py-2 px-4 rounded hover:bg-gray-700" onclick="showSection('developer-perspective')" data-nav-link>Developer Perspective</a>
+                <a href="#graphical-analysis" class="block py-2 px-4 rounded hover:bg-gray-700" onclick="showSection('graphical-analysis')" data-nav-link>Graphical Analysis</a>
             </nav>
         </div>
 
@@ -62,6 +64,7 @@
                         <p><strong>Final Size (MB):</strong> <span id="final-size"></span></p>
                         <p><strong>Total Scenes:</strong> <span id="total-scenes"></span></p>
                         <p><strong>Selected Scenes:</strong> <span id="selected-scenes"></span></p>
+                        <p><strong>Processing Efficiency (s/scene):</strong> <span id="processing-efficiency"></span></p>
                     </div>
                     <div class="bg-white p-6 rounded shadow-md" data-scene-details>
                         <h4 class="text-lg font-semibold mb-2">Scene Details</h4>
@@ -72,6 +75,7 @@
                                     <th class="border p-2">Start (s)</th>
                                     <th class="border p-2">End (s)</th>
                                     <th class="border p-2">Duration (s)</th>
+                                    <th class="border p-2">Importance Score</th>
                                     <th class="border p-2">Transcript</th>
                                     <th class="border p-2">Audio</th>
                                 </tr>
@@ -113,6 +117,27 @@
                     <div class="bg-white p-6 rounded shadow-md" data-logs>
                         <h4 class="text-lg font-semibold mb-2">Logs</h4>
                         <pre id="logs" class="bg-gray-100 p-4 rounded"></pre>
+                    </div>
+                </div>
+
+                <!-- Graphical Analysis -->
+                <div id="graphical-analysis" class="hidden" data-graphical-analysis>
+                    <h3 class="text-xl font-semibold mb-4">Graphical Analysis</h3>
+                    <div class="bg-white p-6 rounded shadow-md mb-6" data-scene-duration-chart>
+                        <h4 class="text-lg font-semibold mb-2">Scene Duration</h4>
+                        <canvas id="scene-duration-chart" class="max-w-full"></canvas>
+                    </div>
+                    <div class="bg-white p-6 rounded shadow-md mb-6" data-processing-time-chart>
+                        <h4 class="text-lg font-semibold mb-2">Processing Time Breakdown</h4>
+                        <canvas id="processing-time-chart" class="max-w-full"></canvas>
+                    </div>
+                    <div class="bg-white p-6 rounded shadow-md mb-6" data-file-size-chart>
+                        <h4 class="text-lg font-semibold mb-2">File Size Comparison</h4>
+                        <canvas id="file-size-chart" class="max-w-full"></canvas>
+                    </div>
+                    <div class="bg-white p-6 rounded shadow-md" data-word-cloud>
+                        <h4 class="text-lg font-semibold mb-2">Transcript Word Cloud</h4>
+                        <div id="word-cloud" class="text-center"></div>
                     </div>
                 </div>
             </div>

@@ -1,6 +1,6 @@
 function showSection(sectionId) {
     console.log('showSection called for:', sectionId);
-    const sections = ['user-perspective', 'developer-perspective'];
+    const sections = ['user-perspective', 'developer-perspective', 'graphical-analysis'];
     sections.forEach(id => {
         const section = document.getElementById(id);
         if (section) {
@@ -128,6 +128,12 @@ function populateAnalytics(data) {
     updateElement('total-scenes', data.scenes ? data.scenes.length : '0');
     updateElement('selected-scenes', data.summary_clips ? data.summary_clips.length : '0');
 
+    // Processing Efficiency
+    const totalProcessingTime = data.processing_steps ? Object.values(data.processing_steps).reduce((sum, step) => sum + (step.time_taken || 0), 0) : 0;
+    const sceneCount = data.scenes ? data.scenes.length : 1;
+    const efficiency = totalProcessingTime / sceneCount;
+    updateElement('processing-efficiency', efficiency ? efficiency.toFixed(2) : 'N/A');
+
     // Scene Details Table
     const sceneTableBody = document.getElementById('scene-table');
     if (sceneTableBody) {
@@ -142,12 +148,14 @@ function populateAnalytics(data) {
                 const audioPlayer = audioPath 
                     ? `<audio controls src="/output/${audioPath}" class="w-full max-w-xs"></audio>` 
                     : 'N/A';
+                const importanceScore = clip.importance_score ? clip.importance_score.toFixed(2) : 'N/A';
                 const row = `
                     <tr>
                         <td class="border p-2">${sceneNum}</td>
                         <td class="border p-2">${clip.start ? clip.start.toFixed(2) : 'N/A'}</td>
                         <td class="border p-2">${clip.end ? clip.end.toFixed(2) : 'N/A'}</td>
                         <td class="border p-2">${clip.start && clip.end ? (clip.end - clip.start).toFixed(2) : 'N/A'}</td>
+                        <td class="border p-2">${importanceScore}</td>
                         <td class="border p-2">${transcript.substring(0, 50)}${transcript.length > 50 ? '...' : ''}</td>
                         <td class="border p-2">${audioPlayer}</td>
                     </tr>
@@ -155,7 +163,7 @@ function populateAnalytics(data) {
                 sceneTableBody.innerHTML += row;
             });
         } else {
-            sceneTableBody.innerHTML = '<tr><td colspan="6" class="border p-2 text-center">No scenes available</td></tr>';
+            sceneTableBody.innerHTML = '<tr><td colspan="7" class="border p-2 text-center">No scenes available</td></tr>';
         }
     } else {
         console.error('Scene table body not found');
@@ -213,7 +221,7 @@ function populateAnalytics(data) {
                         <td class="border p-2">Audio (${scene})</td>
                         <td class="border p-2">${audio.file || 'N/A'}</td>
                         <td class="border p-2">${audio.size_mb ? audio.size_mb.toFixed(2) : 'N/A'}</td>
-                    </tr>
+                </tr>
                 `;
             }
         }
@@ -234,6 +242,184 @@ function populateAnalytics(data) {
 
     // Logs
     updateElement('logs', data.logs && Array.isArray(data.logs) && data.logs.length ? data.logs.join('\n') : 'No logs available');
+
+    // Check if Chart.js is available
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded. Charts will not be rendered.');
+        return;
+    }
+
+    // Scene Duration Chart
+    try {
+        const sceneDurationCtx = document.getElementById('scene-duration-chart')?.getContext('2d');
+        if (!sceneDurationCtx) throw new Error('Scene duration chart canvas not found');
+        const sceneDurations = data.summary_clips && Array.isArray(data.summary_clips) ? data.summary_clips.map((clip, index) => ({
+            label: `Scene ${index + 1}`,
+            duration: clip.end && clip.start ? (clip.end - clip.start).toFixed(2) : 0
+        })) : [];
+        new Chart(sceneDurationCtx, {
+            type: 'bar',
+            data: {
+                labels: sceneDurations.map(item => item.label),
+                datasets: [{
+                    label: 'Duration (s)',
+                    data: sceneDurations.map(item => item.duration),
+                    backgroundColor: '#14B8A6',
+                    borderColor: '#0D9488',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Duration (seconds)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Scenes'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error rendering scene duration chart:', error.message);
+    }
+
+    // Processing Time Breakdown Chart
+    try {
+        const processingTimeCtx = document.getElementById('processing-time-chart')?.getContext('2d');
+        if (!processingTimeCtx) throw new Error('Processing time chart canvas not found');
+        const processingSteps = data.processing_steps && typeof data.processing_steps === 'object' ? Object.entries(data.processing_steps).map(([step, details]) => ({
+            label: step.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            time: details.time_taken || 0
+        })) : [];
+        new Chart(processingTimeCtx, {
+            type: 'pie',
+            data: {
+                labels: processingSteps.map(item => item.label),
+                datasets: [{
+                    data: processingSteps.map(item => item.time),
+                    backgroundColor: ['#14B8A6', '#1E3A8A', '#EF4444', '#F59E0B', '#8B5CF6'],
+                    borderColor: '#FFFFFF',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: context => `${context.label}: ${context.raw.toFixed(2)}s`
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error rendering processing time chart:', error.message);
+    }
+
+    // File Size Comparison Chart
+    try {
+        const fileSizeCtx = document.getElementById('file-size-chart')?.getContext('2d');
+        if (!fileSizeCtx) throw new Error('File size chart canvas not found');
+        const fileSizes = [];
+        if (data.input_size) fileSizes.push({ label: 'Input', size: data.input_size });
+        if (data.final_output && data.final_output.size_mb) fileSizes.push({ label: 'Final Output', size: data.final_output.size_mb });
+        if (data.audio_files && typeof data.audio_files === 'object') {
+            Object.entries(data.audio_files).forEach(([scene, audio]) => {
+                if (audio.size_mb) fileSizes.push({ label: `Audio (${scene})`, size: audio.size_mb });
+            });
+        }
+        if (data.video_clips && Array.isArray(data.video_clips)) {
+            data.video_clips.forEach(clip => {
+                if (clip.size_mb) fileSizes.push({ label: `Video Clip (Scene ${clip.scene_number || 'N/A'})`, size: clip.size_mb });
+            });
+        }
+        new Chart(fileSizeCtx, {
+            type: 'bar',
+            data: {
+                labels: fileSizes.map(item => item.label),
+                datasets: [{
+                    label: 'Size (MB)',
+                    data: fileSizes.map(item => item.size),
+                    backgroundColor: '#1E3A8A',
+                    borderColor: '#1E40AF',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Size (MB)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Files'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error rendering file size chart:', error.message);
+    }
+
+    // Transcript Word Cloud
+    try {
+        const wordCloudDiv = document.getElementById('word-cloud');
+        if (wordCloudDiv && data.transcripts && typeof data.transcripts === 'object') {
+            const wordFreq = {};
+            Object.values(data.transcripts).forEach(transcript => {
+                if (transcript && typeof transcript.text === 'string') {
+                    const words = transcript.text.toLowerCase().replace(/[.,!?]/g, '').split(/\s+/);
+                    words.forEach(word => {
+                        if (word.length > 3) { // Ignore short words
+                            wordFreq[word] = (wordFreq[word] || 0) + 1;
+                        }
+                    });
+                }
+            });
+            const sortedWords = Object.entries(wordFreq).sort((a, b) => b[1] - a[1]).slice(0, 20);
+            wordCloudDiv.innerHTML = sortedWords.length > 0 
+                ? sortedWords.map(([word, count]) => {
+                    const fontSize = Math.min(32, 16 + count * 4);
+                    return `<span style="font-size: ${fontSize}px; margin: 4px; color: #1E3A8A;">${word}</span>`;
+                }).join(' ')
+                : 'No significant words found in transcripts';
+        } else {
+            wordCloudDiv.innerHTML = 'No transcript data available';
+            console.warn('Word cloud skipped: No valid transcript data');
+        }
+    } catch (error) {
+        console.error('Error rendering word cloud:', error.message);
+    }
 }
 
 document.getElementById('video-upload-form')?.addEventListener('submit', function(event) {

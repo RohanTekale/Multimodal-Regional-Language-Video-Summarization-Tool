@@ -136,6 +136,11 @@ header h2 {
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     padding: 1.5rem;
+    transition: transform 0.2s ease;
+}
+
+.bg-white.p-6.rounded.shadow-md:hover {
+    transform: translateY(-2px);
 }
 
 .bg-white.p-6.rounded.shadow-md h3,
@@ -181,6 +186,23 @@ audio {
     border-radius: 6px;
 }
 
+/* Charts */
+canvas {
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+/* Word Cloud */
+#word-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 1rem;
+    background-color: #F9FAFB;
+    border-radius: 6px;
+}
+
 /* Logs */
 pre {
     background-color: #F3F4F6;
@@ -219,6 +241,10 @@ pre {
     table td {
         padding: 0.5rem;
     }
+
+    canvas {
+        max-height: 300px;
+    }
 }
 
 @media (max-width: 640px) {
@@ -228,5 +254,9 @@ pre {
 
     .bg-white.p-6.rounded.shadow-md {
         padding: 1rem;
+    }
+
+    canvas {
+        max-height: 250px;
     }
 }
